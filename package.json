@@ -1,0 +1,23 @@
+{
+    "scripts": {
+        "dev": "millennium-ttc --build dev",
+        "build": "millennium-ttc --build prod",
+        "deploy": "node scripts/deploy.mjs",
+        "ship": "millennium-ttc --build prod && node scripts/deploy.mjs"
+    },
+    "devDependencies": {
+        "@steambrew/api": "^5.8.4",
+        "@steambrew/client": "^5.8.4",
+        "@steambrew/ttc": "^3.2.6",
+        "@steambrew/webkit": "^5.8.4",
+        "@types/react": "19.1.1",
+        "@types/react-dom": "19.1.1"
+    },
+    "type": "module",
+    "name": "steam-power-actions",
+    "version": "1.0.0",
+    "description": "Automatic power action when Steam downloads finish",
+    "main": "./frontend/index.jsx",
+    "author": "Relsev",
+    "license": "MIT"
+}

@@ -1,0 +1,9 @@
+{
+    "$schema": "https://raw.githubusercontent.com/SteamClientHomebrew/Millennium/main/src/sys/plugin-schema.json",
+    "name": "steam-power-actions",
+    "common_name": "Power Actions",
+    "version": "1.0.0",
+    "description": "Run a power action — shut down, restart, sleep, hibernate, or quit Steam — automatically when all downloads finish, with a cancellable countdown.",
+    "backendType": "lua",
+    "webkitApiVersion": "2.0.0"
+}
