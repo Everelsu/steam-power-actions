@@ -1,5 +1,5 @@
 import { callable, type DownloadItem, type DownloadOverview } from '@steambrew/client';
-import { getSettings, setWatchedApps } from './settings';
+import { getSettings, setArmed, setWatchedApps } from './settings';
 import { runPowerAction } from './powerRunner';
 
 const logDebug = callable<[{ msg: string }], string>('log_debug');
@@ -13,6 +13,8 @@ function debug(msg: string): void {
 let latestItems: DownloadItem[] = [];
 /** Appids seen downloading this session (from items or the overview feed). */
 const seenApps = new Set<number>();
+/** Appids confirmed present in the items list at least once (so their later absence means "removed"). */
+const confirmedItems = new Set<number>();
 let itemCallbackLogs = 0;
 
 /** Last seen download queue — feeds the game picker in the arm menu. */
@@ -67,6 +69,38 @@ export function initDownloadWatcher(): () => void {
 		}
 		for (const item of latestItems) {
 			if (item.appid > 0 && !item.completed) seenApps.add(item.appid);
+			if (item.appid > 0) confirmedItems.add(item.appid);
+		}
+
+		const currentIds = new Set(latestItems.filter((item) => item.appid > 0).map((item) => item.appid));
+
+		// A game that was in the queue before but is now gone was removed/cancelled
+		// (a completed game stays in the list with completed=true, so it's still in
+		// currentIds and not treated as removed). Drop such games from the watched
+		// list and the candidate set. Guard against a transient empty delivery.
+		const transientEmpty = latestItems.length === 0 && isDownloading;
+		if (!transientEmpty) {
+			const removed = new Set<number>();
+			for (const appid of confirmedItems) {
+				if (!currentIds.has(appid)) removed.add(appid);
+			}
+			for (const appid of removed) {
+				confirmedItems.delete(appid);
+				seenApps.delete(appid);
+			}
+			if (removed.size > 0) {
+				const watched = getSettings().watchedApps;
+				const stillValid = watched.filter((appid) => !removed.has(appid));
+				if (stillValid.length !== watched.length) {
+					debug(`pruning removed watched games: [${watched.filter((a) => removed.has(a)).join(',')}]`);
+					if (stillValid.length === 0) {
+						setWatchedApps([]);
+						setArmed(false);
+					} else {
+						setWatchedApps(stillValid);
+					}
+				}
+			}
 		}
 
 		const settings = getSettings();

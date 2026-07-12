@@ -1,28 +1,30 @@
 import { Field, ToggleField } from '@steambrew/client';
 import { FC, useSyncExternalStore } from 'react';
 import { actionLabel, BASE_ACTIONS, OPTIONAL_ACTIONS } from './actions';
+import { tSettings } from './i18n';
 import { getSettingsVersion, isActionEnabled, setActionEnabled, subscribeSettings } from './settings';
 
 export const SettingsPanel: FC = () => {
 	useSyncExternalStore(subscribeSettings, getSettingsVersion);
-
+	const s = tSettings();
+	const baseIds = [...BASE_ACTIONS];
 
 	return (
 		<>
-			<Field
-				label="Menu actions"
-				description="Choose which power actions appear in the menu on the Downloads page. Shut down and Restart are always available."
-				bottomSeparator="standard"
-				focusable
-			/>
+			<Field label={s.menuActions} description={s.menuActionsDesc} bottomSeparator="standard" focusable />
 
-			{[...BASE_ACTIONS].map((id) => (
-				<ToggleField key={id} label={actionLabel(id)} description="Always available" checked disabled />
+			{baseIds.map((id) => (
+				<ToggleField key={id} label={actionLabel(id)} description={s.alwaysAvailable} checked disabled />
 			))}
-			{OPTIONAL_ACTIONS.map((a) => (
-				<ToggleField key={a.id} label={actionLabel(a.id)} checked={isActionEnabled(a.id)} onChange={(v) => setActionEnabled(a.id, v)} />
+			{OPTIONAL_ACTIONS.map((a, index) => (
+				<ToggleField
+					key={a.id}
+					label={actionLabel(a.id)}
+					checked={isActionEnabled(a.id)}
+					onChange={(value) => setActionEnabled(a.id, value)}
+					bottomSeparator={index === OPTIONAL_ACTIONS.length - 1 ? 'none' : 'standard'}
+				/>
 			))}
-
 		</>
 	);
 };

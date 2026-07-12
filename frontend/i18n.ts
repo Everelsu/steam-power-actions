@@ -460,25 +460,210 @@ const LANGUAGE_ALIASES: Record<string, string> = {
 	ko: 'koreana',
 };
 
+export interface SettingsStrings {
+	menuActions: string;
+	menuActionsDesc: string;
+	alwaysAvailable: string;
+	defaultAction: string;
+	defaultActionDesc: string;
+	countdownDesc: string;
+	onlyInstallsDesc: string;
+}
+
+const settingsEn: SettingsStrings = {
+	menuActions: 'Menu actions',
+	menuActionsDesc: 'Choose which power actions appear in the menu. Shut down and Restart are always available.',
+	alwaysAvailable: 'Always available',
+	defaultAction: 'Default action',
+	defaultActionDesc: 'Which action is preselected in the menu.',
+	countdownDesc: 'Seconds to cancel before the action runs.',
+	onlyInstallsDesc: 'Ignore routine updates; act only when a newly installed game finishes downloading.',
+};
+
+const SETTINGS_TRANSLATIONS: Record<string, SettingsStrings> = {
+	english: settingsEn,
+	russian: {
+		menuActions: 'Действия в меню',
+		menuActionsDesc: 'Выберите, какие действия показывать в меню. Выключение и перезагрузка доступны всегда.',
+		alwaysAvailable: 'Доступно всегда',
+		defaultAction: 'Действие по умолчанию',
+		defaultActionDesc: 'Какое действие выбрано в меню изначально.',
+		countdownDesc: 'Секунд на отмену перед выполнением действия.',
+		onlyInstallsDesc: 'Игнорировать обычные обновления; срабатывать только после установки новой игры.',
+	},
+	ukrainian: {
+		menuActions: 'Дії в меню',
+		menuActionsDesc: 'Оберіть, які дії показувати в меню. Вимкнення та перезавантаження доступні завжди.',
+		alwaysAvailable: 'Доступно завжди',
+		defaultAction: 'Дія за замовчуванням',
+		defaultActionDesc: 'Яка дія обрана в меню початково.',
+		countdownDesc: 'Секунд на скасування перед виконанням дії.',
+		onlyInstallsDesc: 'Ігнорувати звичайні оновлення; спрацьовувати лише після встановлення нової гри.',
+	},
+	german: {
+		menuActions: 'Menüaktionen',
+		menuActionsDesc: 'Wähle, welche Aktionen im Menü erscheinen. Herunterfahren und Neustart sind immer verfügbar.',
+		alwaysAvailable: 'Immer verfügbar',
+		defaultAction: 'Standardaktion',
+		defaultActionDesc: 'Welche Aktion im Menü vorausgewählt ist.',
+		countdownDesc: 'Sekunden zum Abbrechen, bevor die Aktion ausgeführt wird.',
+		onlyInstallsDesc: 'Routine-Updates ignorieren; nur nach Neuinstallation eines Spiels auslösen.',
+	},
+	french: {
+		menuActions: 'Actions du menu',
+		menuActionsDesc: 'Choisissez les actions affichées dans le menu. Éteindre et Redémarrer sont toujours disponibles.',
+		alwaysAvailable: 'Toujours disponible',
+		defaultAction: 'Action par défaut',
+		defaultActionDesc: "L'action présélectionnée dans le menu.",
+		countdownDesc: "Secondes pour annuler avant l'exécution de l'action.",
+		onlyInstallsDesc: 'Ignorer les mises à jour ; agir seulement après une nouvelle installation.',
+	},
+	spanish: {
+		menuActions: 'Acciones del menú',
+		menuActionsDesc: 'Elige qué acciones aparecen en el menú. Apagar y Reiniciar están siempre disponibles.',
+		alwaysAvailable: 'Siempre disponible',
+		defaultAction: 'Acción predeterminada',
+		defaultActionDesc: 'Qué acción está preseleccionada en el menú.',
+		countdownDesc: 'Segundos para cancelar antes de ejecutar la acción.',
+		onlyInstallsDesc: 'Ignorar actualizaciones; actuar solo tras instalar un juego nuevo.',
+	},
+	latam: {
+		menuActions: 'Acciones del menú',
+		menuActionsDesc: 'Elige qué acciones aparecen en el menú. Apagar y Reiniciar están siempre disponibles.',
+		alwaysAvailable: 'Siempre disponible',
+		defaultAction: 'Acción predeterminada',
+		defaultActionDesc: 'Qué acción está preseleccionada en el menú.',
+		countdownDesc: 'Segundos para cancelar antes de ejecutar la acción.',
+		onlyInstallsDesc: 'Ignorar actualizaciones; actuar solo tras instalar un juego nuevo.',
+	},
+	brazilian: {
+		menuActions: 'Ações do menu',
+		menuActionsDesc: 'Escolha quais ações aparecem no menu. Desligar e Reiniciar estão sempre disponíveis.',
+		alwaysAvailable: 'Sempre disponível',
+		defaultAction: 'Ação padrão',
+		defaultActionDesc: 'Qual ação vem pré-selecionada no menu.',
+		countdownDesc: 'Segundos para cancelar antes de executar a ação.',
+		onlyInstallsDesc: 'Ignorar atualizações comuns; agir só após instalar um jogo novo.',
+	},
+	portuguese: {
+		menuActions: 'Ações do menu',
+		menuActionsDesc: 'Escolha que ações aparecem no menu. Desligar e Reiniciar estão sempre disponíveis.',
+		alwaysAvailable: 'Sempre disponível',
+		defaultAction: 'Ação predefinida',
+		defaultActionDesc: 'Que ação vem pré-selecionada no menu.',
+		countdownDesc: 'Segundos para cancelar antes de executar a ação.',
+		onlyInstallsDesc: 'Ignorar atualizações comuns; agir só após instalar um jogo novo.',
+	},
+	italian: {
+		menuActions: 'Azioni del menu',
+		menuActionsDesc: 'Scegli quali azioni compaiono nel menu. Spegni e Riavvia sono sempre disponibili.',
+		alwaysAvailable: 'Sempre disponibile',
+		defaultAction: 'Azione predefinita',
+		defaultActionDesc: "Quale azione è preselezionata nel menu.",
+		countdownDesc: "Secondi per annullare prima dell'esecuzione.",
+		onlyInstallsDesc: 'Ignora gli aggiornamenti; agisci solo dopo una nuova installazione.',
+	},
+	polish: {
+		menuActions: 'Akcje menu',
+		menuActionsDesc: 'Wybierz, które akcje pojawiają się w menu. Wyłączenie i restart są zawsze dostępne.',
+		alwaysAvailable: 'Zawsze dostępne',
+		defaultAction: 'Akcja domyślna',
+		defaultActionDesc: 'Która akcja jest wstępnie wybrana w menu.',
+		countdownDesc: 'Sekundy na anulowanie przed wykonaniem akcji.',
+		onlyInstallsDesc: 'Ignoruj zwykłe aktualizacje; działaj tylko po instalacji nowej gry.',
+	},
+	turkish: {
+		menuActions: 'Menü eylemleri',
+		menuActionsDesc: 'Menüde hangi eylemlerin görüneceğini seçin. Kapatma ve Yeniden başlatma her zaman kullanılabilir.',
+		alwaysAvailable: 'Her zaman kullanılabilir',
+		defaultAction: 'Varsayılan eylem',
+		defaultActionDesc: 'Menüde önceden seçili eylem.',
+		countdownDesc: 'Eylem çalışmadan önce iptal için saniye.',
+		onlyInstallsDesc: 'Rutin güncellemeleri yok say; yalnızca yeni kurulumdan sonra çalış.',
+	},
+	czech: {
+		menuActions: 'Akce nabídky',
+		menuActionsDesc: 'Vyberte, které akce se zobrazí v nabídce. Vypnutí a restart jsou vždy dostupné.',
+		alwaysAvailable: 'Vždy dostupné',
+		defaultAction: 'Výchozí akce',
+		defaultActionDesc: 'Která akce je v nabídce předvybraná.',
+		countdownDesc: 'Sekundy na zrušení před provedením akce.',
+		onlyInstallsDesc: 'Ignorovat běžné aktualizace; jednat jen po instalaci nové hry.',
+	},
+	dutch: {
+		menuActions: 'Menuacties',
+		menuActionsDesc: 'Kies welke acties in het menu verschijnen. Afsluiten en Herstarten zijn altijd beschikbaar.',
+		alwaysAvailable: 'Altijd beschikbaar',
+		defaultAction: 'Standaardactie',
+		defaultActionDesc: 'Welke actie vooraf is geselecteerd in het menu.',
+		countdownDesc: 'Seconden om te annuleren voordat de actie wordt uitgevoerd.',
+		onlyInstallsDesc: 'Negeer gewone updates; alleen na een nieuwe installatie handelen.',
+	},
+	schinese: {
+		menuActions: '菜单操作',
+		menuActionsDesc: '选择菜单中显示哪些操作。关机和重启始终可用。',
+		alwaysAvailable: '始终可用',
+		defaultAction: '默认操作',
+		defaultActionDesc: '菜单中预先选中的操作。',
+		countdownDesc: '操作执行前可取消的秒数。',
+		onlyInstallsDesc: '忽略常规更新；仅在安装新游戏后执行。',
+	},
+	tchinese: {
+		menuActions: '選單操作',
+		menuActionsDesc: '選擇選單中顯示哪些操作。關機和重新啟動一律可用。',
+		alwaysAvailable: '一律可用',
+		defaultAction: '預設操作',
+		defaultActionDesc: '選單中預先選取的操作。',
+		countdownDesc: '操作執行前可取消的秒數。',
+		onlyInstallsDesc: '忽略一般更新；僅在安裝新遊戲後執行。',
+	},
+	japanese: {
+		menuActions: 'メニューの動作',
+		menuActionsDesc: 'メニューに表示する動作を選びます。シャットダウンと再起動は常に利用できます。',
+		alwaysAvailable: '常に利用可能',
+		defaultAction: '既定の動作',
+		defaultActionDesc: 'メニューで最初に選ばれている動作。',
+		countdownDesc: '実行前にキャンセルできる秒数。',
+		onlyInstallsDesc: '通常の更新は無視し、新規インストール完了時のみ実行します。',
+	},
+	koreana: {
+		menuActions: '메뉴 동작',
+		menuActionsDesc: '메뉴에 표시할 동작을 선택하세요. 종료와 재시작은 항상 사용할 수 있습니다.',
+		alwaysAvailable: '항상 사용 가능',
+		defaultAction: '기본 동작',
+		defaultActionDesc: '메뉴에서 미리 선택되는 동작.',
+		countdownDesc: '동작 실행 전 취소할 수 있는 시간(초).',
+		onlyInstallsDesc: '일반 업데이트는 무시하고 새 설치 완료 시에만 실행합니다.',
+	},
+};
+
+let cachedLang: string | null = null;
 let cached: Strings | null = null;
+let cachedSettings: SettingsStrings | null = null;
 
 function detectLanguage(): string {
+	if (cachedLang) return cachedLang;
 	try {
 		const manager = (window as { LocalizationManager?: { m_rgLocalesToUse?: string[] } }).LocalizationManager;
 		for (const raw of manager?.m_rgLocalesToUse ?? []) {
 			const key = raw.toLowerCase();
-			if (TRANSLATIONS[key]) return key;
-			if (LANGUAGE_ALIASES[key]) return LANGUAGE_ALIASES[key];
+			if (TRANSLATIONS[key]) return (cachedLang = key);
+			if (LANGUAGE_ALIASES[key]) return (cachedLang = LANGUAGE_ALIASES[key]);
 			const base = key.split('-')[0];
-			if (LANGUAGE_ALIASES[base]) return LANGUAGE_ALIASES[base];
+			if (LANGUAGE_ALIASES[base]) return (cachedLang = LANGUAGE_ALIASES[base]);
 		}
 	} catch {
 		/* fall through to english */
 	}
-	return 'english';
+	return (cachedLang = 'english');
 }
 
 export function t(): Strings {
 	if (!cached) cached = TRANSLATIONS[detectLanguage()] ?? en;
 	return cached;
+}
+
+export function tSettings(): SettingsStrings {
+	if (!cachedSettings) cachedSettings = SETTINGS_TRANSLATIONS[detectLanguage()] ?? settingsEn;
+	return cachedSettings;
 }

@@ -1,4 +1,4 @@
-import { pluginConfig, subscribePluginConfig } from '@steambrew/client';
+import { callable, pluginConfig, subscribePluginConfig } from '@steambrew/client';
 import { isBaseAction, OPTIONAL_ACTIONS, PowerActionId } from './actions';
 
 export interface PowerSettings {
@@ -12,6 +12,12 @@ export interface PowerSettings {
 	enabledActions: PowerActionId[];
 }
 
+export interface CountdownMeta {
+	min: number;
+	max: number;
+	step: number;
+}
+
 const ALL_OPTIONAL = OPTIONAL_ACTIONS.map((a) => a.id);
 
 export const DEFAULT_SETTINGS: PowerSettings = {
@@ -23,7 +29,19 @@ export const DEFAULT_SETTINGS: PowerSettings = {
 	enabledActions: [...ALL_OPTIONAL],
 };
 
+const DEFAULT_COUNTDOWN_META: CountdownMeta = { min: 5, max: 120, step: 5 };
+
+// Every write goes through the Lua backend, which validates/clamps and then
+// persists — so the rules live in one place (see backend/main.lua).
+const luaSetSetting = callable<[{ key: string; value: string | number | boolean }], string>('set_setting');
+const luaGetMeta = callable<[], string>('get_settings_meta');
+
+function persist(key: string, value: string | number | boolean): void {
+	luaSetSetting({ key, value }).catch((error) => console.error(`[power-actions] Failed to persist ${key}:`, error));
+}
+
 const cache: PowerSettings = { ...DEFAULT_SETTINGS, watchedApps: [], enabledActions: [...ALL_OPTIONAL] };
+let countdownMeta: CountdownMeta = { ...DEFAULT_COUNTDOWN_META };
 
 const listeners = new Set<() => void>();
 let version = 0;
@@ -47,6 +65,10 @@ export function getSettings(): Readonly<PowerSettings> {
 	return cache;
 }
 
+export function getCountdownMeta(): Readonly<CountdownMeta> {
+	return countdownMeta;
+}
+
 /** Base actions are always available; optional ones only when the user enabled them. */
 export function isActionEnabled(id: PowerActionId): boolean {
 	return isBaseAction(id) || cache.enabledActions.includes(id);
@@ -55,31 +77,31 @@ export function isActionEnabled(id: PowerActionId): boolean {
 export function setArmed(armed: boolean): void {
 	cache.armed = armed;
 	bump();
-	pluginConfig.set('armed', armed).catch((error) => console.error('[power-actions] Failed to persist armed:', error));
+	persist('armed', armed);
 }
 
 export function setAction(action: PowerActionId): void {
 	cache.action = action;
 	bump();
-	pluginConfig.set('action', action).catch((error) => console.error('[power-actions] Failed to persist action:', error));
+	persist('action', action);
 }
 
 export function setCountdownSeconds(seconds: number): void {
 	cache.countdownSeconds = seconds;
 	bump();
-	pluginConfig.set('countdownSeconds', seconds).catch((error) => console.error('[power-actions] Failed to persist countdownSeconds:', error));
+	persist('countdownSeconds', seconds);
 }
 
 export function setOnlyWhenInstalling(value: boolean): void {
 	cache.onlyWhenInstalling = value;
 	bump();
-	pluginConfig.set('onlyWhenInstalling', value).catch((error) => console.error('[power-actions] Failed to persist onlyWhenInstalling:', error));
+	persist('onlyWhenInstalling', value);
 }
 
 export function setWatchedApps(appids: number[]): void {
 	cache.watchedApps = appids;
 	bump();
-	pluginConfig.set('watchedApps', JSON.stringify(appids)).catch((error) => console.error('[power-actions] Failed to persist watchedApps:', error));
+	persist('watchedApps', JSON.stringify(appids));
 }
 
 export function toggleWatchedApp(appid: number): void {
@@ -95,10 +117,10 @@ export function setActionEnabled(id: PowerActionId, enabled: boolean): void {
 	// unexpected fires.
 	if (!enabled && cache.armed && cache.action === id) {
 		cache.armed = false;
-		pluginConfig.set('armed', false).catch((error) => console.error('[power-actions] Failed to persist armed:', error));
+		persist('armed', false);
 	}
 	bump();
-	pluginConfig.set('enabledActions', JSON.stringify(next)).catch((error) => console.error('[power-actions] Failed to persist enabledActions:', error));
+	persist('enabledActions', JSON.stringify(next));
 }
 
 function parseActionList(value: string): PowerActionId[] | null {
@@ -149,5 +171,18 @@ export async function initSettings(): Promise<() => void> {
 	} catch (error) {
 		console.error('[power-actions] Failed to load settings:', error);
 	}
+
+	luaGetMeta()
+		.then((raw) => {
+			const meta = JSON.parse(raw) as { countdown?: Partial<CountdownMeta> };
+			if (meta.countdown) {
+				countdownMeta = { ...DEFAULT_COUNTDOWN_META, ...meta.countdown };
+				bump();
+			}
+		})
+		.catch(() => {
+			/* keep default range */
+		});
+
 	return subscribePluginConfig((key, value) => assign(key, value));
 }
