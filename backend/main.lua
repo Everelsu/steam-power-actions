@@ -1,6 +1,7 @@
 local logger = require("logger")
 local millennium = require("millennium")
 local utils = require("utils")
+local fs = require("fs")
 
 -- Settings live here in Lua: defaults, the schema (which actions exist, the
 -- countdown range) and validation. The frontend is a thin renderer that reads
@@ -91,6 +92,126 @@ local function extract_numbers(str)
 		out[#out + 1] = tonumber(token)
 	end
 	return out
+end
+
+-- ---------------------------------------------------------------------------
+-- App state via appmanifest_<appid>.acf, same technique as SteamShutdown
+-- (https://github.com/akorb/SteamShutdown). The JS download-queue callback
+-- (SteamClient.Downloads.RegisterForDownloadItems) can skip or delay events
+-- for very short/small downloads, causing the frontend to miss completion.
+-- The .acf file, on the other hand, is written by Steam synchronously on
+-- every state change, so reading it directly is a race-free ground truth.
+
+local library_paths_cache = nil
+
+-- Library folders beyond the main Steam install (from libraryfolders.vdf).
+-- Minimal parsing on purpose: we only need the quoted "path" values.
+local function library_paths()
+	if library_paths_cache then
+		return library_paths_cache
+	end
+
+	local steam_path = millennium.steam_path()
+	local paths = { fs.join(steam_path, "steamapps") }
+
+	local vdf_path = fs.join(steam_path, "steamapps", "libraryfolders.vdf")
+	if fs.exists(vdf_path) then
+		local content = utils.read_file(vdf_path)
+		if content then
+			for raw_path in string.gmatch(content, '"path"%s+"([^"]+)"') do
+				local unescaped = raw_path:gsub("\\\\", "\\")
+				local lib = fs.join(unescaped, "steamapps")
+				if fs.exists(lib) then
+					paths[#paths + 1] = lib
+				end
+			end
+		end
+	end
+
+	library_paths_cache = paths
+	return paths
+end
+
+local function find_manifest_path(appid)
+	for _, dir in ipairs(library_paths()) do
+		local candidate = fs.join(dir, "appmanifest_" .. appid .. ".acf")
+		if fs.exists(candidate) then
+			return candidate
+		end
+	end
+	return nil
+end
+
+-- Bit layout reverse-engineered by SteamShutdown from observed StateFlags values:
+--   bit 1  -> a download is running
+--   bit 6  -> the download is no longer running (overrides bit 1/10)
+--   bit 9  -> download was stopped by the user (cancelled, don't wait for it)
+--   bit 10 -> a DLC download is running
+local function is_downloading_flags(flags)
+	local function bit_set(n, pos)
+		return math.floor(n / (2 ^ pos)) % 2 == 1
+	end
+	return (bit_set(flags, 1) or bit_set(flags, 10)) and not bit_set(flags, 9) and not bit_set(flags, 6)
+end
+
+-- Returns the StateFlags integer for appid, or -1 if no manifest was found
+-- (not installed and not yet queued).
+local function app_state_flags(appid)
+	local path = find_manifest_path(appid)
+	if not path then
+		return -1
+	end
+	local content = utils.read_file(path)
+	if not content then
+		return -1
+	end
+	local flags = content:match('"StateFlags"%s+"(%-?%d+)"')
+	if not flags then
+		return -1
+	end
+	return tonumber(flags) or -1
+end
+
+-- Batched lookup for the frontend poller. `appids_json` is a flat JSON number
+-- array. Returns "appid:flags" pairs joined by commas, e.g. "220:1026,440:70"
+-- (raw StateFlags — the frontend interprets the bits itself).
+function get_app_states(appids_json)
+	local ids = extract_numbers(appids_json)
+	local parts = {}
+	for _, id in ipairs(ids) do
+		parts[#parts + 1] = string.format("%d:%d", id, app_state_flags(id))
+	end
+	return table.concat(parts, ",")
+end
+
+-- Whole-library scan for "wait for whole queue" mode — mirrors SteamShutdown's
+-- approach of watching every installed app's manifest rather than trusting a
+-- live event feed. Returns every appid with a manifest, not just downloading
+-- ones: the frontend needs to tell "stopped downloading because it finished"
+-- (manifest still there) apart from "stopped downloading because the game got
+-- uninstalled/removed" (manifest gone entirely) — a plain "is it downloading"
+-- flag alone can't make that distinction. "appid:flags" pairs joined by commas.
+function get_library_snapshot()
+	local parts = {}
+	for _, dir in ipairs(library_paths()) do
+		local entries = fs.list(dir)
+		if entries then
+			for _, entry in ipairs(entries) do
+				if entry.is_file and utils.startswith(entry.name, "appmanifest_") and utils.endswith(entry.name, ".acf") then
+					local content = utils.read_file(entry.path)
+					local flags_str = content and content:match('"StateFlags"%s+"(%-?%d+)"')
+					local flags = flags_str and tonumber(flags_str)
+					if flags then
+						local appid = tonumber(entry.name:match("appmanifest_(%d+)%.acf"))
+						if appid then
+							parts[#parts + 1] = string.format("%d:%d", appid, flags)
+						end
+					end
+				end
+			end
+		end
+	end
+	return table.concat(parts, ",")
 end
 
 -- Frontend reads the schema from here so ranges/action lists have one source.

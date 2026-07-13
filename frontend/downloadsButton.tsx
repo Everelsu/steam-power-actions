@@ -4,6 +4,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { ArmButton } from './ArmMenu';
 import { closeArmPanel } from './ArmPanel';
 import { downloadsClasses } from './downloadsClasses';
+import { notifyQueueInteraction } from './downloadWatcher';
 
 const HOST_ID = 'power-actions-arm';
 const STYLE_ID = 'power-actions-arm-style';
@@ -69,6 +70,7 @@ interface Injection {
 let disposed = false;
 const observers = new Set<MutationObserver>();
 const injections = new Set<Injection>();
+const clickListeners = new Map<Document, (event: MouseEvent) => void>();
 
 /**
  * Watches the main window for the downloads page and mounts the arm button
@@ -103,6 +105,8 @@ export function initDownloadsButton(): () => void {
 		observers.clear();
 		for (const injection of injections) removeInjection(injection);
 		injections.clear();
+		for (const [doc, handler] of clickListeners) doc.removeEventListener('click', handler, { capture: true });
+		clickListeners.clear();
 	};
 }
 
@@ -138,6 +142,24 @@ function watchWindow(wnd: Window): void {
 		tryInject(doc);
 	};
 	start();
+
+	// Nudge the download watcher to re-check state right away on any click
+	// inside the downloads page (pause, resume, remove — we don't try to tell
+	// which), instead of waiting out the rest of its poll interval. Steam's own
+	// button classes are unstable across builds, so this deliberately doesn't
+	// try to identify *which* control was clicked — it only shortens the
+	// watcher's reaction time; the watcher's own ACF + live-queue check is
+	// still what decides whether anything actually happened.
+	const onDownloadsPageClick = (event: MouseEvent): void => {
+		const cls = downloadsClasses();
+		if (!cls) return;
+		const target = event.target;
+		if (target instanceof Element && target.closest(`.${cls.DownloadsPage}`)) {
+			notifyQueueInteraction();
+		}
+	};
+	doc.addEventListener('click', onDownloadsPageClick, { capture: true });
+	clickListeners.set(doc, onDownloadsPageClick);
 
 	wnd.addEventListener('unload', () => observer.disconnect(), { once: true });
 }
