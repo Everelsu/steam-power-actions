@@ -15,7 +15,7 @@
     },
     "type": "module",
     "name": "steam-power-actions",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Automatic power action when Steam downloads finish",
     "main": "./frontend/index.jsx",
     "author": "Relsev",
